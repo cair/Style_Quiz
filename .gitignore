@@ -87,3 +87,7 @@ target/
 
 # Mypy cache
 .mypy_cache/
+
+#Custom
+resources/certification/
+resources/database_settings.py
