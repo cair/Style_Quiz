@@ -50,6 +50,17 @@ BUCKET_EMBEDDINGS_PATH = "resources/picture_embeddings/EfficientNet_V2_L_final/"
 
 # Publishable dataset constants
 DATASET_FOLDER = "resources/data/dataset/"
+DATASET_IMAGES_FOLDER = "resources/data/dataset/images/"
 
 USER_ACTIVITY_TRIPLET_COLUMNS = ["customer.id", "outfit.id", "meta.validFrom", "derived.bookingTime"]
 
+# CSV file names
+USER_ACTIVITY_TRIPLETS_CSV = "user_activity_triplets.csv"
+PICTURE_TRIPLETS_CSV = "picture_triplets.csv"
+OUTFITS_CSV = "outfits.csv"
+
+USER_ACTIVITY_TRIPLETS_CSV_PATH = DATASET_FOLDER + USER_ACTIVITY_TRIPLETS_CSV
+PICTURE_TRIPLETS_CSV_PATH = DATASET_FOLDER + PICTURE_TRIPLETS_CSV
+OUTFITS_CSV_PATH = DATASET_FOLDER + OUTFITS_CSV
+
+CSV_SEPARATOR = ";"

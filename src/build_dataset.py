@@ -6,7 +6,7 @@ from src import load_dataframes
 from resources.constants import *
 
 def get_dataframes(load_local_dataframes=False, include_tag_data=True):
-    if load_local_dataframes:
+    if not load_local_dataframes:
         if not os.path.isdir(DATA_SAVE_PATH):
             os.mkdir(DATA_SAVE_PATH)
 
@@ -31,22 +31,38 @@ def get_dataframes(load_local_dataframes=False, include_tag_data=True):
         print("Finished loading dataframes.")
     return orders_df, outfits_df, pictures_df
 
-def build_dataset():
-    orders_df, outfits_df, pictures_df = load_dataframes(load_dataframes=False)
+def replace_tag_in_list(tag_list, tag_to_replace, replacement_tag):
+    return [replacement_tag if tag == tag_to_replace else tag for tag in tag_list]
+
+def build_dataset(load_local_dataframes=False):
+    orders_df, outfits_df, pictures_df = get_dataframes(load_local_dataframes=load_local_dataframes)
 
     # Construct user activity triplets
-    print(orders_df.shape, orders_df["customer.id"].nunique(), orders_df["outfit.id"].nunique())
     triplets_df = orders_df[USER_ACTIVITY_TRIPLET_COLUMNS].dropna()
-    print(triplets_df.shape, triplets_df["customer.id"].nunique(), triplets_df["outfit.id"].nunique())
-
     customer_ids = triplets_df["customer.id"].unique()
     np.random.shuffle(customer_ids)
     customer_id_dict = {customer_id: i for i, customer_id in enumerate(customer_ids)}
     triplets_df["customer.id"] = triplets_df["customer.id"].apply(lambda x: customer_id_dict[x])
+    triplets_df.to_csv(USER_ACTIVITY_TRIPLETS_CSV_PATH, index=False)
+    print("Finished constructing user activity triplets.")
 
-    triplets_df.to_csv(DATASET_FOLDER + "user_activity_triplets.csv", index=False)
-    
-    pass
+    # Construct outfit data
+    output_outfits_df = outfits_df.drop(["meta.validTo", "Outfit_size"], axis=1)
+    output_outfits_df["description"] = output_outfits_df["description"].apply(lambda x: x.replace(";", ":"))
+    output_outfits_df["outfit_tags"] = output_outfits_df["outfit_tags"].apply(list) # Convert these columns to lists to ensure they can be easily read via eval from the csv
+    output_outfits_df["tag_categories"] = output_outfits_df["tag_categories"].apply(list) # Convert these columns to lists to ensure they can be easily read via eval from the csv
+    output_outfits_df["tag_categories"] = output_outfits_df["tag_categories"].apply(lambda x: replace_tag_in_list(x, "brand", "Brand"))
+    output_outfits_df.to_csv(OUTFITS_CSV_PATH, index=False, sep=";")
+    print("Finished constructing outfit data.")
+
+    # Collect outfit pictures
+    picture_triplets_df = pictures_df[["id", "owner", "displayOrder"]]
+    picture_triplets_df.columns = ["picture.id", "outfit.id", "displayOrder"]
+    picture_triplets_df = picture_triplets_df[picture_triplets_df["outfit.id"].isin(output_outfits_df["id"])].copy()
+    picture_triplets_df.to_csv(PICTURE_TRIPLETS_CSV_PATH, index=False, sep=";")
+    print("Finished constructing picture triplets.")
+
+    return triplets_df, output_outfits_df, picture_triplets_df
 
 if __name__ == "__main__":
     build_dataset()
