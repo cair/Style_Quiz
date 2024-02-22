@@ -160,6 +160,25 @@ def format_outfit_array(outfits_array, include_tag_data=True, most_recent_instan
 
     return outfit_df
 
+def format_all_outfits(include_tag_data=True):
+    tqdm.pandas()
+    print("Retrieving outfit data from database...")
+    retrieved_outfits_df = get_db_query(OUTFITS_QUERY)
+    outfit_df = retrieved_outfits_df[OUTFITS_DF_KEEP_COLUMNS]
+
+    outfit_tag_df = get_outfit_tag_data()
+    if include_tag_data:
+        tag_df = get_tag_data()
+        print("Updating outfit data with tags...")
+        outfit_df["outfit_tags"] = outfit_df.progress_apply(lambda row: apply_tags(row.id, "tag", outfit_tag_df, tag_df), axis=1)
+        #outfit tags don't appear to be marked as outdated in the same way outfits are. though it's possible this will cause issues down the line.
+        outfit_df["tag_categories"] = outfit_df.progress_apply(lambda row: apply_tags(row.id, "tagCategory", outfit_tag_df, tag_df), axis=1)
+        outfit_df["Outfit_size"] = outfit_df.progress_apply(lambda row: get_outfit_size(row.outfit_tags, row.tag_categories), axis=1)#.drop(outfit_df.columns[6:13], axis=1)
+        print("Encoding tag vectors...")
+    print("Finished updating outfit data.")
+    print(outfit_df.columns)
+    return outfit_df
+
 # Collect user order history for recommender system training data
 def construct_user_orders():
     orders_df = get_db_query(USER_ORDER_QUERY, keep_columns=ORDER_KEEP_COLUMNS)
@@ -169,5 +188,8 @@ def construct_user_orders():
     orders_df.dropna(subset=["subscription_id"], inplace=True)
     return orders_df
 
+def construct_spot_orders():
+    spot_rentals_df = get_db_query(SPOT_RENTALS_QUERY, keep_columns=SPOT_RENTALS_KEEP_COLUMNS)    
+    return spot_rentals_df
 if __name__ == "__main__":
     print("Debug main")

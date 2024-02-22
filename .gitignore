@@ -91,3 +91,6 @@ target/
 #Custom
 resources/certification/
 resources/database_settings.py
+resources/data/dataset/images/
+resources/data/dataset/embeddings/
+database_local/

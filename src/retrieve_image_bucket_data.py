@@ -93,6 +93,16 @@ def download_temp_batch(picture_ids, temp_folder_name):
     shutil.rmtree(temp_folder_name)
     return batch_pictures
 
+def return_default_image(image_format):
+    default_image = Image.new("RGB", (1448, 2048), (255, 255, 255))
+    default_image.save(PLACEHOLDER_IMAGE_NAME)
+    if image_format == "torch":
+        default_image_io = io.read_image(PLACEHOLDER_IMAGE_NAME, mode=io.ImageReadMode.RGB)
+        os.remove(PLACEHOLDER_IMAGE_NAME)
+        return default_image_io
+    elif image_format == "PIL":
+        return default_image
+
 # Testing async download of images below
 # import pandas as pd
 
