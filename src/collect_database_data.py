@@ -41,9 +41,13 @@ def get_outfit_tags(outfit_id, outfit_tag_df, tag_df):
     outfit_tags = tag_df[tag_df["id"].isin(relevant_tags["tagsId"].values)]
     return outfit_tags
 
+#Outdated, use get_outfit_tags and 
 def apply_tags(outfit_id, column_name, outfit_tag_df, tag_df):
     outfit_tags = get_outfit_tags(outfit_id, outfit_tag_df, tag_df)
     return outfit_tags[column_name].values
+
+def get_outfit_tags(outfit_id, outfit_tag_dict, tag_tag_dict):
+    return np.array([tag_tag_dict.get(tag_id, None) for tag_id in outfit_tag_dict.get(outfit_id, [])])
 
 def get_outfit_size(outfit_tags, outfit_categories):
     if "Size" in outfit_categories:
@@ -56,6 +60,7 @@ def get_tagged_outfits():
     outfit_df = get_outfit_data()
     outfit_tag_df = get_outfit_tag_data()
     tag_df = get_tag_data()
+    
     print("Updating outfit data with tags...")
     outfit_df["outfit_tags"] = outfit_df.apply(lambda row: apply_tags(row.id, "tag", outfit_tag_df, tag_df), axis=1)
     outfit_df["tag_categories"] = outfit_df.apply(lambda row: apply_tags(row.id, "tagCategory", outfit_tag_df, tag_df), axis=1)
@@ -160,19 +165,31 @@ def format_outfit_array(outfits_array, include_tag_data=True, most_recent_instan
 
     return outfit_df
 
-def format_all_outfits(include_tag_data=True):
+def format_all_outfits(include_tag_data=True, use_keep_columns=True):
     tqdm.pandas()
     print("Retrieving outfit data from database...")
     retrieved_outfits_df = get_db_query(OUTFITS_QUERY)
-    outfit_df = retrieved_outfits_df[OUTFITS_DF_KEEP_COLUMNS]
+    if use_keep_columns:
+        outfit_df = retrieved_outfits_df[OUTFITS_DF_KEEP_COLUMNS].copy()
+    else:
+        outfit_df = retrieved_outfits_df.copy()
 
-    outfit_tag_df = get_outfit_tag_data()
     if include_tag_data:
+        # Retrieve tag data from database and format it in a way that will retrieve tags efficiently
         tag_df = get_tag_data()
+        outfit_tag_df = get_outfit_tag_data()
+        tag_tag_dict = tag_df[["id", "tag", "tagCategory"]].set_index("id").to_dict()["tag"]
+        tag_category_dict = tag_df[["id", "tag", "tagCategory"]].set_index("id").to_dict()["tagCategory"]
+        outfit_tag_dict = outfit_tag_df[["outfitsId", "tagsId"]].groupby("outfitsId").agg(list).to_dict()["tagsId"]
+
         print("Updating outfit data with tags...")
-        outfit_df["outfit_tags"] = outfit_df.progress_apply(lambda row: apply_tags(row.id, "tag", outfit_tag_df, tag_df), axis=1)
-        #outfit tags don't appear to be marked as outdated in the same way outfits are. though it's possible this will cause issues down the line.
-        outfit_df["tag_categories"] = outfit_df.progress_apply(lambda row: apply_tags(row.id, "tagCategory", outfit_tag_df, tag_df), axis=1)
+        # outfit_df["outfit_tags"] = outfit_df.progress_apply(lambda row: apply_tags(row.id, "tag", outfit_tag_df, tag_df), axis=1)
+        # #outfit tags don't appear to be marked as outdated in the same way outfits are. though it's possible this will cause issues down the line.
+        # outfit_df["tag_categories"] = outfit_df.progress_apply(lambda row: apply_tags(row.id, "tagCategory", outfit_tag_df, tag_df), axis=1)
+        
+        outfit_df["outfit_tags"] = outfit_df.progress_apply(lambda row: get_outfit_tags(row.id, outfit_tag_dict, tag_tag_dict), axis=1)
+        outfit_df["tag_categories"] = outfit_df.progress_apply(lambda row: get_outfit_tags(row.id, outfit_tag_dict, tag_category_dict), axis=1)
+
         outfit_df["Outfit_size"] = outfit_df.progress_apply(lambda row: get_outfit_size(row.outfit_tags, row.tag_categories), axis=1)#.drop(outfit_df.columns[6:13], axis=1)
         print("Encoding tag vectors...")
     print("Finished updating outfit data.")

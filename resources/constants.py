@@ -20,7 +20,7 @@ SPOT_RENTALS_QUERY = "SELECT * FROM `SpotRentals` WHERE `SpotRentals`.`meta.vali
 USER_COLUMNS_QUERY = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'Users'"
 
 # Pandas keep columns
-ORDER_KEEP_COLUMNS = ["id", "customer.id", "extras.contactEmail", "meta.validFrom", "derived.bookingTime", "shoppingCartMarker"]
+ORDER_KEEP_COLUMNS = ["id", "customer.id", "extras.contactEmail", "meta.validTo", "derived.bookingTime", "shoppingCartMarker"]
 OUTFITS_DF_KEEP_COLUMNS = ["id", "name", "description", "group", "owner", "timeCreated", "retailPrice", "meta.validTo"]
 ORDER_KEEP_COLUMNS_USER_DATA = ["id", "customer.id", "email", "username"]
 RENTALS_KEEP_COLUMNS = ["id", "order", "subscription", "outfit.id"]
@@ -28,6 +28,8 @@ PICTURES_KEEP_COLUMNS = ["id", "owner", "displayOrder"]
 SPOT_RENTALS_KEEP_COLUMNS = ["id", "order", "outfit.id", "totalPeriod.start", "totalPeriod.end", "meta.validTo"]
 SPOT_RENTALS_TRIPLET_COLUMNS = ["id", "outfit.id", "totalPeriod.start", "totalPeriod.end"]
 SPOT_RENTALS_RENAME_COLUMNS = {"outfit.id": "outfit_id", "totalPeriod.start": "start_date", "totalPeriod.end": "end_date"}
+
+THIRD_CHANCE_DROP_COLUMNS = [False, "LINK", "COMMENT", "SHOPIFY", "LASTET OPP", "LOCATION", "OK TO SELL?", "STATUS", "LOCATED", "BARCODE"]
 
 # CF save dirs
 DATA_SAVE_PATH = "resources/data/dataframes/"
@@ -37,6 +39,7 @@ COMPRESSION_EXTENSION = "gz"
 # pd file names
 ORDERS_PATH = f"orders_df.{COMPRESSION_EXTENSION}"
 OUTFITS_PATH = f"outfits_df.{COMPRESSION_EXTENSION}"
+OUTFITS_FULL_PATH = f"outfits_full_df.{COMPRESSION_EXTENSION}"
 PREDICTIONS_PATH = f"predictions_df.{COMPRESSION_EXTENSION}"
 PICTURES_PATH = f"pictures_df.{COMPRESSION_EXTENSION}"
 SPOT_RENTALS_PATH = f"spot_rentals_df.{COMPRESSION_EXTENSION}"
@@ -44,15 +47,21 @@ OUTFIT_FACTORS_PATH = f"outfit_factors_df.npy"
 USER_FACTORS_PATH = f"user_factors_df.npy"
 NEAREST_NEIGHBORS_PATH = "outfits_nearest_neighbors.pkl"
 
+# Other data file paths
+THIRD_CHANCE_RAW_PATH = "resources/data/third_chance.xlsx"
+
 # Keep a manual record of sizes.
 # Shouldn't expand too much and no sensible way of programatically find their relative sizes.
 SIZE_REFERENCES = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL']
 WILDCARD_SIZES = ["Onesize", "NaN", "None", '37', '38', '41', '36', '40', '39']
 
 # Embedding paths
+EMBEDDING_MODEL_NAME = "EfficientNet_V2_L_final"
 PICTURES_DIR_PATH = r"C:\Users\kaborg15\PycharmProjects\FREja_API\resources\fjong_images"#"resources/fjong_images/"
-LOCAL_EMBEDDINGS_PATH = "resources/picture_embeddings"
-BUCKET_EMBEDDINGS_PATH = "resources/picture_embeddings/EfficientNet_V2_L_final/"
+LOCAL_EMBEDDINGS_FOLDER_PATH = "resources/data/dataset/embeddings/"
+COMPUTED_EMBEDDINGS_PATH = f"resources/data/dataset/embeddings/{EMBEDDING_MODEL_NAME}/"
+EMBEDDING_MODEL_PICKLE_PATH = f"{LOCAL_EMBEDDINGS_FOLDER_PATH}{EMBEDDING_MODEL_NAME}.pkl"
+EMBEDDING_MODEL_DICT_PICKLE_PATH = f"{LOCAL_EMBEDDINGS_FOLDER_PATH}{EMBEDDING_MODEL_NAME}_dict.pkl"
 
 # Publishable dataset constants
 DATASET_FOLDER = "resources/data/dataset/"
@@ -66,10 +75,12 @@ USER_ACTIVITY_TRIPLETS_CSV = "user_activity_triplets.csv"
 SPOT_RENTALS_CSV = "spot_rentals.csv"
 PICTURE_TRIPLETS_CSV = "picture_triplets.csv"
 OUTFITS_CSV = "outfits.csv"
+THIRD_CHANCE_CSV = "third_chance.csv"
 
 USER_ACTIVITY_TRIPLETS_CSV_PATH = DATASET_FOLDER + USER_ACTIVITY_TRIPLETS_CSV
 SPOT_RENTALS_CSV_PATH = DATASET_FOLDER + SPOT_RENTALS_CSV
 PICTURE_TRIPLETS_CSV_PATH = DATASET_FOLDER + PICTURE_TRIPLETS_CSV
 OUTFITS_CSV_PATH = DATASET_FOLDER + OUTFITS_CSV
+THIRD_CHANCE_CSV_PATH = DATASET_FOLDER + THIRD_CHANCE_CSV
 
 CSV_SEPARATOR = ";"
