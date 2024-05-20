@@ -29,7 +29,7 @@ SPOT_RENTALS_KEEP_COLUMNS = ["id", "order", "outfit.id", "totalPeriod.start", "t
 SPOT_RENTALS_TRIPLET_COLUMNS = ["id", "outfit.id", "totalPeriod.start", "totalPeriod.end"]
 SPOT_RENTALS_RENAME_COLUMNS = {"outfit.id": "outfit_id", "totalPeriod.start": "start_date", "totalPeriod.end": "end_date"}
 
-THIRD_CHANCE_DROP_COLUMNS = [False, "LINK", "COMMENT", "SHOPIFY", "LASTET OPP", "LOCATION", "OK TO SELL?", "STATUS", "LOCATED", "BARCODE"]
+THIRD_CHANCE_DROP_COLUMNS = [False, "LINK", "COMMENT", "SHOPIFY", "LASTET OPP", "LOCATION", "OK TO SELL?", "STATUS", "LOCATED", "BARCODE", "VARETELLING"]
 
 # CF save dirs
 DATA_SAVE_PATH = "resources/data/dataframes/"

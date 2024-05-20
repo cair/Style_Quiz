@@ -96,7 +96,9 @@ def build_dataset(load_local_dataframes=False):
 
     third_chance_df = third_chance_df.drop(columns=THIRD_CHANCE_DROP_COLUMNS, errors="ignore")
     third_chance_df = third_chance_df.rename(mapper=column_name_assignment, axis=1) # Rename columns to lowercase, makes the format more consistent with the other dataframes
-    third_chance_df = third_chance_df.dropna(subset=["id", "name", "owner", "brand"], how="all") # Drop rows witout any identifying information
+    third_chance_df = third_chance_df.dropna(subset=["name", "owner", "brand"], how="all") # Drop rows witout any identifying information
+    third_chance_df["id"] = third_chance_df["id"].apply(lambda x: x if x != "-" else None)
+    third_chance_df = third_chance_df.dropna(subset=["id"], how="any") # Drop all rows without an id
     third_chance_df = third_chance_df.dropna(subset=["condition", "retail_price", "tc_price"], how="all") # Drop rows without any pricing or condition information
     third_chance_df["date_added"] = third_chance_df["date_added"].apply(convert_date_added) # dates have an irregular format, convert it before saving to resolve the issue
     third_chance_df.to_csv(THIRD_CHANCE_CSV_PATH, index=False, sep=CSV_SEPARATOR)
@@ -105,4 +107,4 @@ def build_dataset(load_local_dataframes=False):
     return triplets_df, spot_triplets_df, output_outfits_df, picture_triplets_df
 
 if __name__ == "__main__":
-    build_dataset()
+    build_dataset(load_local_dataframes=True)
