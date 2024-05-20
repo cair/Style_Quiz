@@ -92,7 +92,7 @@ target/
 resources/certification/
 resources/database_settings.py
 resources/data/dataset/images/
-resources/data/dataset/images_remote/
+resources/data/dataset/images_local/
 resources/data/dataset/embeddings/
 resources/other_datasets/
 database_local/
