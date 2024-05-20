@@ -96,3 +96,4 @@ resources/data/dataset/images_local/
 resources/data/dataset/embeddings/
 resources/other_datasets/
 database_local/
+notebooks/dataset_eda.ipynb
