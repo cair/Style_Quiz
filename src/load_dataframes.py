@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from functools import cache, lru_cache, _lru_cache_wrapper
+from functools import lru_cache, _lru_cache_wrapper
 import pickle
 import gc
 

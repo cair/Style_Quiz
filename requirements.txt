@@ -1,8 +1,11 @@
 pandas
 transformers
+tqdm
 matplotlib
 mysql-connector-python
 scikit-learn
 google-cloud-storage
 torch
+torchvision
 Pillow
+seaborn
