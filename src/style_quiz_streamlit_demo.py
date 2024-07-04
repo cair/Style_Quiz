@@ -42,9 +42,7 @@ def construct_cluster_collages(cluster_samples):
     print("Constructing cluster collages, number of clusters: ", len(cluster_samples))
     for i, cluster in enumerate(cluster_samples):
         image_ids = [st.session_state.outfits_to_lead_picture_id_dict[outfit_id] for outfit_id in cluster["id"].values]
-        #print(len(image_ids), image_ids[:5])
-        cluster_collage = display_image_ids(image_ids)  # This function should return an image collage
-        #st.image(cluster_collage, caption=f"Cluster {i}")
+        cluster_collage = display_image_ids(image_ids) 
         st.session_state.image_widgets[i].image(cluster_collage, caption=f"Cluster {i}")
 
 

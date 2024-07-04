@@ -48,7 +48,7 @@ def draw_thumbnails_on_scatter_plot(scatter_plot, tsne_df, num_thumbnails=-1, FI
 
 from sklearn.manifold import TSNE
 
-def generate_tsne_diagram(outfits_df, embedding_column, mark_points=None, return_tsne=False, show_plot=True, save_path="reports/figures/outfit_tsne.png"):
+def generate_tsne_diagram(outfits_df, embedding_column, mark_points=None, return_tsne=False, show_plot=True, hue_column="category", save_path="reports/figures/outfit_tsne.png"):
     embeddings = np.array(outfits_df[embedding_column].values.tolist())
     ids = outfits_df["id"].values
 
@@ -57,13 +57,24 @@ def generate_tsne_diagram(outfits_df, embedding_column, mark_points=None, return
     tsne_df = pd.DataFrame(tsne_results, columns=['TSNE1', 'TSNE2'])
 
     tsne_df["id"] = ids
-    tsne_df = tsne_df.merge(outfits_df[["id", "category", "lead_picture_id"]], on="id").reset_index()
-    tsne_df["category"] = tsne_df["category"].apply(lambda x: x[0] if len(x) > 0 else None)
+    tsne_df = tsne_df.merge(outfits_df[["id", hue_column, "lead_picture_id"]], on="id").reset_index()
+    #tsne_df["category"] = tsne_df["category"].apply(lambda x: x[0] if len(x) > 0 else None)
+    # If hue column is "category", we need to extract the first element of the list
+    if type(tsne_df[hue_column].iloc[0]) == list:
+        tsne_df[hue_column] = tsne_df[hue_column].apply(lambda x: x[0] if len(x) > 0 else None)
 
 
 
     plt.figure(figsize=(16, 8))
-    scatter_plot = sns.scatterplot(x='TSNE1', y='TSNE2', hue="category", data=tsne_df)
+    #scatter_plot = sns.scatterplot(x='TSNE1', y='TSNE2', hue="category", data=tsne_df)
+    if OTHER_VALUE in tsne_df[hue_column].unique():
+        other_points = tsne_df[tsne_df[hue_column] == OTHER_VALUE]
+        scatter_plot = sns.scatterplot(x='TSNE1', y='TSNE2', hue=hue_column, data=other_points)
+        category_points = tsne_df[tsne_df[hue_column] != OTHER_VALUE]
+        sns.scatterplot(x='TSNE1', y='TSNE2', hue=hue_column, data=category_points)
+    else:
+        scatter_plot = sns.scatterplot(x='TSNE1', y='TSNE2', hue=hue_column, data=tsne_df)
+
 
     # Meant to mark points on the scatter plot that are of interest, initially used to mark the outfits that don't have any positive examples from triplet loss
     if mark_points is not None:
@@ -74,7 +85,7 @@ def generate_tsne_diagram(outfits_df, embedding_column, mark_points=None, return
     plt.title(None)
     plt.xlabel(None)
     plt.ylabel(None)
-    plt.legend(title='Category')
+    plt.legend(title=hue_column.capitalize())
     sns.despine()
     plt.tight_layout()
     plt.axis('off')
@@ -92,14 +103,14 @@ def generate_tsne_diagram(outfits_df, embedding_column, mark_points=None, return
 
 from sklearn.decomposition import PCA
 
-def generate_pca_diagram(outfits_df, embedding_column, extra_embeddings=None, mark_points=None, return_pca=False, show_plot=True, save_path="reports/figures/outfit_pca.png"):
+def generate_pca_diagram(outfits_df, embedding_column, extra_embeddings=None, mark_points=None, return_pca=False, show_plot=True, hue_column="category", save_path="reports/figures/outfit_pca.png"):
     embeddings = np.array(outfits_df[embedding_column].values.tolist())
     ids = outfits_df["id"].values
     pca = PCA(n_components=2, random_state=42)
     pca_results = pca.fit_transform(embeddings)
     pca_df = pd.DataFrame(pca_results, columns=['PC1', 'PC2'])
     pca_df["id"] = ids
-    pca_df = pca_df.merge(outfits_df[["id", "category", "lead_picture_id"]], on="id").reset_index()
+    pca_df = pca_df.merge(outfits_df[["id", hue_column, "lead_picture_id"]], on="id").reset_index()
     pca_df["category"] = pca_df["category"].apply(lambda x: x[0] if len(x) > 0 else None)
     
     plt.figure(figsize=(16, 8))
@@ -128,23 +139,34 @@ def generate_pca_diagram(outfits_df, embedding_column, extra_embeddings=None, ma
 
 from sklearn.decomposition import TruncatedSVD
 
-def generate_svd_diagram(outfits_df, embedding_column, extra_embeddings=None, mark_points=None, return_svd=False, show_plot=True, save_path="reports/figures/outfit_svd.png"):
+OTHER_VALUE = "other"
+
+def generate_svd_diagram(outfits_df, embedding_column, extra_embeddings=None, mark_points=None, return_svd=False, show_plot=True, hue_column="category", save_path="reports/figures/outfit_svd.png"):
     embeddings = np.array(outfits_df[embedding_column].values.tolist())
     ids = outfits_df["id"].values
     svd = TruncatedSVD(n_components=2, random_state=42)
     svd_results = svd.fit_transform(embeddings)
     svd_df = pd.DataFrame(svd_results, columns=['SV1', 'SV2'])
     svd_df["id"] = ids
-    svd_df = svd_df.merge(outfits_df[["id", "category", "lead_picture_id"]], on="id").reset_index()
-    svd_df["category"] = svd_df["category"].apply(lambda x: x[0] if len(x) > 0 else None)
+    svd_df = svd_df.merge(outfits_df[["id", hue_column, "lead_picture_id"]], on="id").reset_index()
+
+    # If hue column is "category", we need to extract the first element of the list
+    if type(svd_df[hue_column].iloc[0]) == list:
+        svd_df[hue_column] = svd_df[hue_column].apply(lambda x: x[0] if len(x) > 0 else None)
     
     plt.figure(figsize=(16, 8))
-    scatter_plot = sns.scatterplot(x='SV1', y='SV2', hue="category", data=svd_df)
-    
+    if OTHER_VALUE in svd_df[hue_column].unique():
+        other_points = svd_df[svd_df[hue_column] == OTHER_VALUE]
+        scatter_plot = sns.scatterplot(x='SV1', y='SV2', hue=hue_column, data=other_points)
+        category_points = svd_df[svd_df[hue_column] != OTHER_VALUE]
+        sns.scatterplot(x='SV1', y='SV2', hue=hue_column, data=category_points)
+    else:
+        scatter_plot = sns.scatterplot(x='SV1', y='SV2', hue=hue_column, data=svd_df)
+
     if mark_points is not None:
         svd_df["marked"] = mark_points
         marked_points = svd_df[svd_df["marked"] == True]
-        sns.scatterplot(x='SV1', y='SV2', hue='category', data=marked_points, s=50, marker='X', edgecolor='black', linewidth=1)
+        sns.scatterplot(x='SV1', y='SV2', hue=hue_column, data=marked_points, s=50, marker='X', edgecolor='black', linewidth=1)
     if extra_embeddings is not None:
         svd_embeddings = svd.transform(extra_embeddings)
         plt.scatter(svd_embeddings[:, 0], svd_embeddings[:, 1], c='black', marker='X', s=50)
