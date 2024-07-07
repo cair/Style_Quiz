@@ -1,16 +1,18 @@
+
 import os
-os.chdir(r"C:\Users\kaborg15\Python_projects\Vibrent_Style_Quiz_Generation")
+import sys
+sys.path.append(os.getcwd())
+from src.display_images import display_image_ids
+
 
 import streamlit as st
 import time
 from sklearn.cluster import KMeans
+from sklearn_extra.cluster import KMedoids
 import numpy as np
 import pandas as pd
 
-from src.display_images import display_image_ids
-import random
-
-OUTFIT_EMBEDDINGS_DF_PATH = r"resources\data\outfit_embeddings_df.pkl"
+OUTFIT_EMBEDDINGS_DF_PATH = r"resources\data\outfit_embeddings_triplets_df.pkl"
 REPRESENTATION_COLUMN = "outfit_embeddings"
 NUM_SAMPLES_PER_CLUSTER = 27
 
@@ -29,11 +31,10 @@ def cluster_current_split(current_cluster_df):
         num_cluster_samples = min(NUM_SAMPLES_PER_CLUSTER, len(cluster_outfits))
         
         # Properly represent the diversity of the cluster by applying KMeans to the embeddings
-        cluster_kmeans = KMeans(n_clusters=num_cluster_samples, random_state=1, n_init="auto").fit(cluster_embeddings)
-        cluster_outfits["representation_cluster"] = cluster_kmeans.labels_
-        cluster_representation = cluster_outfits.groupby("representation_cluster").first().reset_index()
+        cluster_kmedoids = KMedoids(n_clusters=num_cluster_samples, random_state=1, init="k-medoids++").fit(cluster_embeddings)
+        cluster_representation = cluster_outfits.iloc[cluster_kmedoids.medoid_indices_].reset_index()
         cluster_samples.append(cluster_representation)
-        
+
         st.session_state.text_widgets[i].write(f"Cluster {i}: {len(cluster_outfits)} outfits")
 
     return current_cluster_df, cluster_samples

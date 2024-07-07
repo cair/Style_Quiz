@@ -26,7 +26,7 @@ def draw_points_on_scatter_plot(scatter_plot, points, color='black', size=50, ma
         scatter_plot.scatter(point[0], point[1], s=size, c=color, marker=marker)
     return scatter_plot
 
-def draw_thumbnails_on_scatter_plot(scatter_plot, tsne_df, num_thumbnails=-1, FIGURE_SAVE_PATH="reports/figures/outfit_tsne.png"):
+def draw_thumbnails_on_scatter_plot(scatter_plot, tsne_df, mark_column=None, num_thumbnails=-1, FIGURE_SAVE_PATH="reports/figures/outfit_tsne.png"):
     # Use information from the scatter plot to map t-SNE coordinates to image coordinates
     image = Image.open(FIGURE_SAVE_PATH)
     image_width, image_height = image.size
@@ -34,9 +34,14 @@ def draw_thumbnails_on_scatter_plot(scatter_plot, tsne_df, num_thumbnails=-1, FI
     x_min, x_max = scatter_plot.get_xlim()
     y_min, y_max = scatter_plot.get_ylim()
 
-    num_thumbnails = num_thumbnails if num_thumbnails > 0 else tsne_df.dropna(subset=["lead_picture_id"]).shape[0]
+    if not mark_column:
+        num_thumbnails = num_thumbnails if num_thumbnails > 0 else tsne_df.dropna(subset=["lead_picture_id"]).shape[0]
+        thumbnails_df = tsne_df.dropna(subset=["lead_picture_id"]).sample(num_thumbnails)
+    else:
+        thumbnails_df = tsne_df[tsne_df[mark_column] == True]
+ 
     # Not all outfits have a lead picture, so we need to drop the ones that do not have it
-    for row in tqdm(tsne_df.dropna(subset=["lead_picture_id"]).sample(num_thumbnails).itertuples()):
+    for row in tqdm(thumbnails_df.itertuples()):
         image_path = os.path.join(IMAGES_PATH, row.lead_picture_id)
         img_x, img_y = tsne_to_image_coordinates(row.TSNE1, row.TSNE2, image_width, image_height, x_min, x_max, y_min, y_max)
         try:
@@ -48,7 +53,21 @@ def draw_thumbnails_on_scatter_plot(scatter_plot, tsne_df, num_thumbnails=-1, FI
 
 from sklearn.manifold import TSNE
 
-def generate_tsne_diagram(outfits_df, embedding_column, mark_points=None, return_tsne=False, show_plot=True, hue_column="category", save_path="reports/figures/outfit_tsne.png"):
+def plot_scatter_plot(df, hue_column, x_column, y_column, **kwargs):
+    if OTHER_VALUE in df[hue_column].unique():
+        other_points = df[df[hue_column] == OTHER_VALUE]
+        print(f"No. of other points: {len(other_points)}")
+        scatter_plot = sns.scatterplot(x=x_column, y=y_column, hue=hue_column, data=other_points, **kwargs)
+        category_points = df[df[hue_column] != OTHER_VALUE]
+        print(f"No. of category points: {len(category_points)}")
+        sns.scatterplot(x=x_column, y=y_column, hue=hue_column, data=category_points, **kwargs)
+    else:
+        print(f"No. of points: {len(df)}")
+        scatter_plot = sns.scatterplot(x=x_column, y=y_column, hue=hue_column, data=df, **kwargs)
+    return scatter_plot
+    
+
+def generate_tsne_diagram(outfits_df, embedding_column, legend=True, mark_points=None, mark_column=None, return_tsne=False, show_plot=True, hue_column="category", save_path="reports/figures/outfit_tsne.png"):
     embeddings = np.array(outfits_df[embedding_column].values.tolist())
     ids = outfits_df["id"].values
 
@@ -57,7 +76,8 @@ def generate_tsne_diagram(outfits_df, embedding_column, mark_points=None, return
     tsne_df = pd.DataFrame(tsne_results, columns=['TSNE1', 'TSNE2'])
 
     tsne_df["id"] = ids
-    tsne_df = tsne_df.merge(outfits_df[["id", hue_column, "lead_picture_id"]], on="id").reset_index()
+    merge_columns = ["id", "lead_picture_id", hue_column, mark_column] if mark_column is not None else ["id", "lead_picture_id", hue_column]
+    tsne_df = tsne_df.merge(outfits_df[merge_columns], on="id").reset_index()
     #tsne_df["category"] = tsne_df["category"].apply(lambda x: x[0] if len(x) > 0 else None)
     # If hue column is "category", we need to extract the first element of the list
     if type(tsne_df[hue_column].iloc[0]) == list:
@@ -66,15 +86,13 @@ def generate_tsne_diagram(outfits_df, embedding_column, mark_points=None, return
 
 
     plt.figure(figsize=(16, 8))
-    #scatter_plot = sns.scatterplot(x='TSNE1', y='TSNE2', hue="category", data=tsne_df)
-    if OTHER_VALUE in tsne_df[hue_column].unique():
-        other_points = tsne_df[tsne_df[hue_column] == OTHER_VALUE]
-        scatter_plot = sns.scatterplot(x='TSNE1', y='TSNE2', hue=hue_column, data=other_points)
-        category_points = tsne_df[tsne_df[hue_column] != OTHER_VALUE]
-        sns.scatterplot(x='TSNE1', y='TSNE2', hue=hue_column, data=category_points)
+    if not mark_column:
+        scatter_plot = plot_scatter_plot(tsne_df, hue_column, 'TSNE1', 'TSNE2',)
     else:
-        scatter_plot = sns.scatterplot(x='TSNE1', y='TSNE2', hue=hue_column, data=tsne_df)
-
+        unmarked_df = tsne_df[tsne_df[mark_column] == False]
+        scatter_plot = plot_scatter_plot(unmarked_df, hue_column, 'TSNE1', 'TSNE2')
+        marked_df = tsne_df[tsne_df[mark_column] == True]
+        scatter_plot = plot_scatter_plot(marked_df, hue_column, 'TSNE1', 'TSNE2', s=100, marker='X', edgecolor='black', linewidth=1)
 
     # Meant to mark points on the scatter plot that are of interest, initially used to mark the outfits that don't have any positive examples from triplet loss
     if mark_points is not None:
@@ -85,7 +103,10 @@ def generate_tsne_diagram(outfits_df, embedding_column, mark_points=None, return
     plt.title(None)
     plt.xlabel(None)
     plt.ylabel(None)
-    plt.legend(title=hue_column.capitalize())
+    if legend:
+        plt.legend(title=hue_column.capitalize())
+    else:
+        scatter_plot.get_legend().remove()
     sns.despine()
     plt.tight_layout()
     plt.axis('off')

@@ -4,8 +4,12 @@ tqdm
 matplotlib
 mysql-connector-python
 scikit-learn
+scikit-learn-extra
 google-cloud-storage
 torch
 torchvision
 Pillow
 seaborn
+
+Ipykernel
+Ipywidget
