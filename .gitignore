@@ -94,7 +94,6 @@ resources/database_settings.py
 resources/data/dataset/images/
 resources/data/dataset/images_local/
 resources/data/dataset/embeddings/
-resources/data/
 resources/other_datasets/
 database_local/
 notebooks/dataset_eda.ipynb
